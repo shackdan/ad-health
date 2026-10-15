@@ -167,3 +167,42 @@ function New-FakeConfig {
     foreach ($key in $Override.Keys) { $config[$key] = $Override[$key] }
     $config
 }
+
+function New-FakeFinding {
+    param(
+        [string]$CheckId = 'StaleUser',
+        [string]$CheckName = 'Stale enabled users',
+        [string]$Severity = 'Medium',
+        [string]$ObjectName = 'alice',
+        [string]$Detail = 'Last logon 120 days ago'
+    )
+    [pscustomobject]@{
+        CheckId           = $CheckId
+        CheckName         = $CheckName
+        Category          = 'Users'
+        Severity          = $Severity
+        ObjectName        = $ObjectName
+        DistinguishedName = "CN=$ObjectName,OU=Staff,DC=lab,DC=local"
+        Detail            = $Detail
+    }
+}
+
+function New-FakeResult {
+    param(
+        [string]$Id = 'StaleUser',
+        [string]$Name = 'Stale enabled users',
+        [string]$Severity = 'Medium',
+        [string]$Status = 'Ran',
+        [string]$Reason = '',
+        [object[]]$Findings = @()
+    )
+    [pscustomobject]@{
+        CheckId   = $Id
+        CheckName = $Name
+        Category  = 'Users'
+        Severity  = $Severity
+        Status    = $Status
+        Reason    = $Reason
+        Findings  = $Findings
+    }
+}
