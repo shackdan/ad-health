@@ -84,6 +84,9 @@ Describe 'Test-PasswordNotRequired' {
         $result[0].Detail | Should -Be 'Password not required flag set'
         $result[0].Severity | Should -Be 'High'
     }
+    It 'does not flag an interdomain trust account (UAC 0x800 | 0x20)' {
+        (Invoke-Check Test-PasswordNotRequired (New-FakeData -Users @(New-FakeUser -Name 'TRUSTED$' -UserAccountControl 2080))).Count | Should -Be 0
+    }
     It 'does not flag a normal account (UAC 512)' {
         (Invoke-Check Test-PasswordNotRequired (New-FakeData -Users @(New-FakeUser -UserAccountControl 512))).Count | Should -Be 0
     }

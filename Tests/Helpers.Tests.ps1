@@ -103,7 +103,11 @@ Describe 'Select-ADHealthUser' {
             New-FakeUser -Name 'off' -Enabled $false
             New-FakeUser -Name 'krbtgt' -Enabled $false -Rid 502
             New-FakeUser -Name 'guest' -Rid 501
+            New-FakeUser -Name 'TRUSTED$' -Rid 1110 -UserAccountControl 2080
         )
+    }
+    It 'excludes interdomain trust accounts' {
+        @(Invoke-InModule Select-ADHealthUser @{ Data = $data } | ForEach-Object { $_.Name }) | Should -Not -Contain 'TRUSTED$'
     }
     It 'returns enabled non-built-in users by default' {
         @(Invoke-InModule Select-ADHealthUser @{ Data = $data } | ForEach-Object { $_.Name }) | Should -Be @('on')

@@ -36,8 +36,11 @@ function Select-ADHealthUser {
         [Parameter(Mandatory)]$Data,
         [switch]$Disabled
     )
+    # Interdomain trust accounts (DOMAIN$) are managed by the trust, not people.
+    $interdomainTrustAccount = 0x800
     foreach ($user in $Data.Users) {
         if ([bool]$user.Enabled -eq [bool]$Disabled) { continue }
+        if ($user.UserAccountControl -band $interdomainTrustAccount) { continue }
         if (Test-ADHealthBuiltinAccount -Sid $user.Sid -DomainSid $Data.Domain.DomainSid) { continue }
         $user
     }

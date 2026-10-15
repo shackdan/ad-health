@@ -2,7 +2,8 @@ Register-ADHealthCheck @{ Id = 'GroupOnlyDisabledMembers'; Name = 'Groups with o
 
 function Test-GroupOnlyDisabledMembers {
     # Members that are not collected users/computers (nested groups, contacts,
-    # objects outside the search base) are ignored.
+    # objects outside the search base) are ignored, as are built-in accounts
+    # such as Guest and krbtgt, which are disabled by design.
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]$Data,
@@ -11,7 +12,10 @@ function Test-GroupOnlyDisabledMembers {
     $check = Get-ADHealthCheck -Id 'GroupOnlyDisabledMembers'
     $enabledByDn = @{}  # PowerShell hashtables are case-insensitive
     foreach ($object in @($Data.Users) + @($Data.Computers)) {
-        if ($object) { $enabledByDn[$object.DistinguishedName] = [bool]$object.Enabled }
+        if (-not $object) { continue }
+        if ($object.PSObject.Properties['Sid'] -and
+            (Test-ADHealthBuiltinAccount -Sid $object.Sid -DomainSid $Data.Domain.DomainSid)) { continue }
+        $enabledByDn[$object.DistinguishedName] = [bool]$object.Enabled
     }
     foreach ($group in $Data.Groups) {
         $resolved = @(

@@ -63,6 +63,15 @@ Describe 'Test-GroupOnlyDisabledMembers' {
         $group = New-FakeGroup -Members @('CN=Nested,OU=Groups,DC=lab,DC=local')
         (Invoke-Check Test-GroupOnlyDisabledMembers (New-FakeData -Groups @($group))).Count | Should -Be 0
     }
+    It 'ignores built-in accounts so Guests and Denied RODC are not flagged' {
+        $guest = New-FakeUser -Name 'Guest' -Rid 501 -Enabled $false -DistinguishedName 'CN=Guest,CN=Users,DC=lab,DC=local'
+        $krbtgt = New-FakeUser -Name 'krbtgt' -Rid 502 -Enabled $false -DistinguishedName 'CN=krbtgt,CN=Users,DC=lab,DC=local'
+        $guests = New-FakeGroup -Name 'Guests' -DistinguishedName 'CN=Guests,CN=Builtin,DC=lab,DC=local' `
+            -Members @($guest.DistinguishedName, 'CN=Domain Guests,CN=Users,DC=lab,DC=local')
+        $deniedRodc = New-FakeGroup -Name 'Denied RODC Password Replication Group' `
+            -Members @($krbtgt.DistinguishedName, 'CN=Domain Admins,CN=Users,DC=lab,DC=local', 'CN=Domain Controllers,CN=Users,DC=lab,DC=local')
+        (Invoke-Check Test-GroupOnlyDisabledMembers (New-FakeData -Groups @($guests, $deniedRodc) -Users @($guest, $krbtgt))).Count | Should -Be 0
+    }
     It 'matches member DNs case-insensitively' {
         $group = New-FakeGroup -Members @($onUser.DistinguishedName.ToLowerInvariant(), $offUser.DistinguishedName.ToUpperInvariant())
         (Invoke-Check Test-GroupOnlyDisabledMembers (New-FakeData -Groups @($group) -Users @($offUser, $onUser))).Count | Should -Be 0
